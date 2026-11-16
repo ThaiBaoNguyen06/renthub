@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
-  title: "Đăng ký", // layout adds " | RentHub"
+  title: "Đăng ký | RentHub",
   robots: { index: false }, // trang tài khoản không cần lên Google
 };
 

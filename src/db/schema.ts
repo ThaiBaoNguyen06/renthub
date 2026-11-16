@@ -3,11 +3,11 @@ export const wards = pgTable("wards", {
     id: smallint("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", {length: 80}).notNull().unique(),
     slug: varchar("slug", {length: 80}).notNull().unique(),
-    formerAreas: text("former_areas"),
+    formerArea: text("former_areas"),
     sortOrder: smallint("sort_order").notNull().default(0)
 }).enableRLS();
 
-export const userRole = pgEnum("user_role", ["host", "agent", "client", "admin"]);
+export const userRole = pgEnum("user_role", ["host", "admin", "agent", "client"]);
 
 export const users = pgTable("users", {
     id: uuid("id").primaryKey().defaultRandom(),
