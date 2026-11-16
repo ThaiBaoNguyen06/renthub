@@ -160,7 +160,7 @@ export async function requestChangesAction(input: unknown) {
   const user = await requireRole("agent");            // 1. who
   const data = requestChangesSchema.parse(input);     // 2. what (zod)
   await propertyRequestService.requestChanges(user, data); // 3. do (rules + DB)
-  revalidatePath(`/agent/requests/${data.requestId}`); // 4. refresh views
+  updateTag(`request:${data.requestId}`);             // 4. refresh cached views (read-your-writes)
 }
 ```
 
@@ -198,13 +198,13 @@ The domain check gives a friendly error; the conditional `WHERE` makes it safe u
 | Concern | Control |
 |---|---|
 | Authentication | next-auth Credentials provider, bcrypt (cost 12), JWT session in an HttpOnly, Secure, SameSite=Lax cookie, 7-day expiry |
-| Authorization | `requireRole()` at the entry point + ownership/assignment checks inside services. Middleware only redirects unauthenticated users; it is **not** the security boundary |
+| Authorization | `requireRole()` at the entry point + ownership/assignment checks inside services. Proxy (`src/proxy.ts`, formerly middleware) only redirects unauthenticated users; it is **not** the security boundary |
 | Self-registration | Only `host`/`client` accepted by the register schema; `agent` created by `admin` only |
 | Mass assignment | zod schemas list allowed fields; `hostId`, `assignedAgentId`, `status`, `role` never accepted from input |
 | Data API exposure | RLS enabled on all tables with no policies; Supabase anon key not used by the app |
 | Storage | Listing photos in a public bucket (they are public anyway); uploads only through server-issued signed URLs; size/type checks (JPEG/PNG/WebP, ≤ 5 MB) |
 | Abuse | Rate limiting on login, register, enquiry submission (per IP + per user) |
-| Headers | CSP, HSTS, X-Content-Type-Options, Referrer-Policy, frame-ancestors none — set in `next.config.mjs` |
+| Headers | CSP, HSTS, X-Content-Type-Options, Referrer-Policy, frame-ancestors none — set in `next.config.ts` |
 | Secrets | Only in env vars; `SUPABASE_SERVICE_ROLE_KEY` server-only (never `NEXT_PUBLIC_`) |
 | Privacy | Host address line and internal notes never leave authorized views; public pages read only `listings` |
 | Audit | `property_request_status_history` records every request transition |
@@ -217,11 +217,17 @@ Goal: every published listing and every ward page can rank on Google for searche
 
 | Page | Rendering | Revalidation |
 |---|---|---|
-| Home `/` | Static + ISR | On publish/archive (`revalidatePath`) + every 1 h |
-| Search `/thue-nha-quan-7` | Server-rendered per request (filters in query string) | — |
-| Ward page `/thue-nha-quan-7/[ward]` | ISR | On publish/archive |
-| Listing detail `/nha-cho-thue/[slug]` | ISR, `generateStaticParams` for published listings | On edit/publish/archive |
-| Dashboards, login, account | Dynamic, `noindex` | — |
+| Home `/` | Static shell; listing data via `"use cache"` + `cacheTag('listings')`, `cacheLife('hours')` | `updateTag('listings')` on publish/archive |
+| Search `/thue-nha-quan-7` | Static shell + filtered results streamed in `<Suspense>` (reads `searchParams`) | — |
+| Ward page `/thue-nha-quan-7/[ward]` | `generateStaticParams` (4 wards) + cached data, tag `ward:{slug}` | On publish/archive |
+| Listing detail `/nha-cho-thue/[slug]` | `generateStaticParams` for published listings + cached data, tag `listing:{id}`; unlisted slugs render on demand and are then cached (ISR with Cache Components) | On edit/publish/archive |
+| Dashboards, login, account | Session read inside `<Suspense>` (`"use cache: private"` for the current user), `noindex` | — |
+
+Rules from Cache Components (`cacheComponents: true` in `next.config.ts`):
+- Anything that reads the request (`cookies()`, `headers()`, `searchParams`, the session) or uncached data must be inside a `<Suspense>` boundary, otherwise the build fails.
+- A plain `"use cache"` function cannot call `cookies()`; resolve the user first and pass the id in. Keep per-user cached helpers unexported.
+- Cache keys and tags are stored in plain text: use ids, never personal data.
+- `revalidateTag` now takes a profile (`revalidateTag(tag, 'max')`); inside Server Actions prefer `updateTag(tag)` so the user sees their change immediately.
 
 Googlebot always receives full HTML (no client-only rendering for public content).
 
@@ -306,7 +312,7 @@ Large files never pass through Vercel functions (body size limits, cost).
 
 ### Cache invalidation
 
-Any service call that changes public data (publish, archive, edit published listing) calls `revalidatePath` for: the listing page, its ward page, the district page, home, and the sitemap.
+Any service call that changes public data (publish, archive, edit published listing) calls `updateTag` for: `listing:{id}`, `ward:{slug}`, `listings` (home, district page, sitemap).
 
 ## 8. Error handling and observability
 

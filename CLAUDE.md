@@ -15,8 +15,11 @@ The project is being **rebuilt from scratch**. The old code is still in git (com
 
 ## Tech stack
 
-- Next.js 14 (App Router) + React 18 + TypeScript
-- Tailwind CSS
+- Next.js 16 (App Router, Turbopack, `cacheComponents` on) + React 19 + TypeScript
+  - Next 16 differs from older tutorials: read the bundled docs in `node_modules/next/dist/docs/` first.
+  - `middleware.ts` is now `proxy.ts`; caching uses `"use cache"` + `cacheTag`/`cacheLife`, refreshed with `updateTag`/`revalidateTag(tag, profile)`.
+  - Request-time reads (`cookies()`, session, uncached DB queries) must sit inside `<Suspense>`.
+- Tailwind CSS v4 (config in CSS, no `tailwind.config.ts`)
 - PostgreSQL on **Supabase** + Drizzle ORM (`src/db/schema.ts`), connected with the `postgres` driver
   - Supabase is used as the Postgres database only; auth stays with next-auth.
   - When using the Supabase transaction pooler (port 6543), create the client with `prepare: false`.

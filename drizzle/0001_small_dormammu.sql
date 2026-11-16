@@ -1,0 +1,1 @@
+ALTER TABLE "wards" RENAME COLUMN "fomrer_areas" TO "former_areas";

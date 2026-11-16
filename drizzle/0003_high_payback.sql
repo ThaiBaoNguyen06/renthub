@@ -1,0 +1,1 @@
+ALTER TABLE "wards" ALTER COLUMN "name" SET DATA TYPE varchar(80);

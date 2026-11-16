@@ -19,13 +19,13 @@
 | 2 | Show wards from the DB | Drizzle schema, migrations, DB client | 0 |
 | 3 | Register form | Server Actions, zod, bcrypt | 1 |
 | 4 | Login / logout | next-auth, JWT session, cookies | 1 |
-| 5 | Role-protected dashboards | Authorization, middleware, seed data | 1 |
+| 5 | Role-protected dashboards | Authorization, proxy, seed data | 1 |
 | 6 | Host creates and lists requests | Ownership, foreign keys, forms | 2 |
 | 7 | Edit / cancel by status | State machine, unit tests (Vitest) | 2 |
 | 8 | Agent claims a request | Conditional updates, transactions, race conditions | 3 |
 | 9 | Request changes / approve / reject | Status history, reasons, CHECK constraints | 3 |
 | 10 | Listings with photos | File upload, Supabase Storage, slugs | 4 |
-| 11 | Public marketplace | ISR, search, pagination | 5 |
+| 11 | Public marketplace | `use cache`, cache tags, search, pagination | 5 |
 | 12 | SEO | Metadata, JSON-LD, sitemap, robots | 5 |
 | 13 | Saved listings + enquiries | Composite keys, inbox pattern | 6 |
 | 14 | End-to-end tests | Playwright, security checks | 7 |
@@ -41,7 +41,7 @@
 3. Point `.mcp.json` at the new project ref (ask Claude).
 4. `npm run dev` → open http://localhost:3000.
 
-**Learn:** what each top-level file does (`package.json`, `next.config.mjs`, `tailwind.config.ts`, `tsconfig.json`); why `.env` is never committed.
+**Learn:** what each top-level file does (`package.json`, `next.config.ts`, `postcss`/Tailwind v4 in `globals.css`, `tsconfig.json`); why `.env` is never committed.
 
 **Checkpoint:** the dev server starts (a 404 is fine — there is no page yet). You can explain what `src/app/layout.tsx` does.
 
@@ -68,7 +68,7 @@ Start with **one** table so the whole pipeline is clear before it gets big.
 3. `npm run db:migrate` → check the table in Supabase Table Editor.
 4. Write a second migration that inserts the 4 wards.
 5. Create `src/db/client.ts` (postgres driver + drizzle, `prepare: false`, `server-only`).
-6. On the home page, query the wards and list them.
+6. On the home page, query the wards and list them. With Cache Components, put the query in a function marked `"use cache"` (wards rarely change) — otherwise wrap the component in `<Suspense>`, or the build fails.
 
 **Learn:** schema → migration → database; why migrations are files you commit; why DB code must never run in the browser.
 
@@ -96,6 +96,7 @@ Start with **one** table so the whole pipeline is clear before it gets big.
 1. next-auth Credentials provider: find user by email, compare with bcrypt, refuse `is_active = false`.
 2. Put `id` and `role` into the JWT and session (type them in `next-auth.d.ts`).
 3. Login page `/dang-nhap`, logout button, show "Xin chào, {name}" in the header.
+4. Next 16: `next-auth@4.24.15+` supports Next 16. Read the session inside `<Suspense>` (e.g. the header's user menu), never at the top level of a layout.
 
 **Learn:** how a session cookie works, what is inside a JWT, why the role must come from the server.
 
@@ -108,11 +109,11 @@ Start with **one** table so the whole pipeline is clear before it gets big.
 **Do**
 1. `lib/auth.ts`: `getCurrentUser()` and `requireRole(...roles)`.
 2. Empty dashboards: `/host`, `/agent`, `/admin`, `/account`, each calling `requireRole`.
-3. `middleware.ts`: redirect logged-out users to login (convenience only).
+3. `src/proxy.ts` (Next 16 name for middleware): redirect logged-out users to login (convenience only).
 4. Admin page: create an Agent account.
 5. Seed script: 1 admin, 2 agents, 1 host, 1 client (dev only).
 
-**Learn:** authentication (who you are) vs authorization (what you may do); why middleware is not the security boundary.
+**Learn:** authentication (who you are) vs authorization (what you may do); why proxy is not the security boundary.
 
 **Checkpoint:** logged in as a client, opening `/agent` is refused even if you type the URL.
 
@@ -180,7 +181,7 @@ Start with **one** table so the whole pipeline is clear before it gets big.
 1. Home: latest published listings, links per ward.
 2. `/thue-nha-quan-7` with filters (ward, type, price, bedrooms) and pagination.
 3. `/thue-nha-quan-7/[ward]` and `/nha-cho-thue/[slug]`.
-4. `revalidatePath` when a listing is published/archived/edited.
+4. Cache listing queries with `"use cache"` + `cacheTag`; call `updateTag` when a listing is published/archived/edited.
 5. Use `/ui-ux-pro-max` to pick the visual style before polishing.
 
 **Checkpoint:** logged out, you can find and open a published listing; drafts and archived listings are never shown.

@@ -61,7 +61,7 @@ gantt
 - [ ] next-auth Credentials + JWT; role in token/session
 - [ ] `getCurrentUser()`, `requireRole()`
 - [ ] Register page (host or client only), login, logout
-- [ ] Middleware redirects for `/host`, `/agent`, `/admin`, `/account`
+- [ ] Proxy (`src/proxy.ts`) redirects for `/host`, `/agent`, `/admin`, `/account`
 - [ ] Admin page: create Agent account
 - [ ] Seed script: one admin, two agents, one host, one client (dev only)
 - [ ] Rate limit login and register
@@ -112,7 +112,7 @@ gantt
 - [ ] JSON-LD: `RealEstateListing`, `BreadcrumbList`, `ItemList`, `Organization`
 - [ ] Archived → 410 page; old slug → 301
 - [ ] `sitemap.ts`, `robots.ts`, `noindex` on private and filtered pages
-- [ ] ISR + `revalidatePath` on publish/archive/edit
+- [ ] `use cache` + cache tags; `updateTag` on publish/archive/edit
 - [ ] Lighthouse ≥ 90 for Performance, SEO, Accessibility on listing detail (mobile)
 
 **Done when:** a guest finds a published listing via search and Rich Results Test passes.
