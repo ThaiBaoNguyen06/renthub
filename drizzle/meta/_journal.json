@@ -29,6 +29,20 @@
       "when": 1794591214350,
       "tag": "0003_high_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795196877823,
+      "tag": "0004_ambiguous_alex_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795197757321,
+      "tag": "0005_clear_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }
