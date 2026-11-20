@@ -1,29 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Be Vietnam Pro has a "vietnamese" subset, so accented letters render in the same font.
+const beVietnam = Be_Vietnam_Pro({
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-be-vietnam",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "RentHub",
-  description: "Where you can find your home in Distric 7 HCM city",
+  title: {
+    default: "RentHub – Thuê nhà Quận 7, TP.HCM",
+    template: "%s | RentHub",
+  },
+  description:
+    "Tìm căn hộ, nhà phố, studio cho thuê tại khu Quận 7 (Tân Thuận, Phú Thuận, Tân Mỹ, Tân Hưng). Tin đăng được môi giới xác minh.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="vi"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="vi" className={beVietnam.variable}>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }

@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     agentFeedback: true,
   },
   cacheComponents: true,
+  images: {
+    // Sample photos for the mock homepage; real photos will come from Supabase Storage.
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {
